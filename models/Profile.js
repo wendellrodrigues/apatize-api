@@ -35,13 +35,23 @@ const ProfileSchema = new mongoose.Schema({
   },
 
   //Saved meals (All are put in object for hash lookup)
-  likedMeals: { String },
-  dislikedMeals: { String },
+  likedMeals: {
+    type: Object,
+  },
+  dislikedMeals: {
+    type: Object,
+  },
 
   //Meal types
-  allergies: { String },
-  cuisines: { String },
-  dietaryRestrictions: { String },
+  allergies: {
+    type: Object,
+  },
+  cuisines: {
+    type: Object,
+  },
+  dietaryRestrictions: {
+    type: Object,
+  },
 });
 
 module.exports = Profile = mongoose.model("profile", ProfileSchema);

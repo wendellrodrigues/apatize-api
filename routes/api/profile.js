@@ -5,6 +5,7 @@ const Profile = require("../../models/Profile");
 const User = require("../../models/User");
 const { check, validationResult } = require("express-validator");
 const calculators = require("../../helpers/calculators");
+const util = require("util");
 
 /**
   @route    GET  api/profile/me
@@ -77,6 +78,14 @@ router.post(
     //Add recommended calories to profile fields
     profileFields.recommendedCals = recommendedCals;
 
+    profileFields.likedMeals = {};
+    profileFields.dislikedMeals = {};
+
+    //Meal types
+    profileFields.allergies = {};
+    profileFields.cuisines = {};
+    profileFields.dietaryRestrictions = {};
+
     try {
       let profile = await Profile.findOne({ user: req.user.id }); //Matched from token
       if (profile) {
@@ -112,8 +121,36 @@ router.post("/addLikedMeals", auth, async (req, res) => {
     return res.status(200).json({ status: "empty" });
   }
 
+  //Get profile
+  let profile = await Profile.findOne({ user: req.user.id });
+  if (!profile) return res.status(500).send("No Profile");
+
+  var likedMeals = profile.likedMeals;
+
   for (let meal of meals) {
-    //Add to profile
+    //If meal exists in liked meals already, add another like to it
+    if (likedMeals[meal]) {
+      const numOfLikes = likedMeals[meal];
+      likedMeals[meal] = numOfLikes + 1;
+      //Else, add an initial like to it
+    } else {
+      likedMeals[meal] = 1;
+    }
+  }
+
+  //Update profile with liked meals
+  const profileFields = {};
+  profileFields.likedMeals = likedMeals;
+  //Upload to mongoDB
+  try {
+    profile = await Profile.findOneAndUpdate(
+      { user: req.user.id },
+      { $set: profileFields },
+      { useFindAndModify: false }
+    );
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send("Server error");
   }
 });
 
