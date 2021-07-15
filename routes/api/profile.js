@@ -55,6 +55,8 @@ router.post(
     //Pull fields out of the request body
     const { height, weight, age, sex, goal, lifestyle } = req.body;
 
+    console.log(req.user.id);
+
     //Build profile objects
     const profileFields = {};
     profileFields.user = req.user.id;
@@ -93,10 +95,11 @@ router.post(
         profile = await Profile.findOneAndUpdate(
           { user: req.user.id },
           { $set: profileFields },
-          { useFindAndModify: false }
+          { new: true }
         );
-        return res.status(200).send();
+        return res.status(200).send({ msg: "User Profile Created" });
       }
+
       //Create new profile
       profile = new Profile(profileFields);
       await profile.save();
@@ -107,6 +110,62 @@ router.post(
     }
   }
 );
+
+/**
+  @route    GET api/profile
+  @desc     Get all profiles
+  @access   Public
+ */
+router.get("/", async (req, res) => {
+  try {
+    const profiles = await Profile.find().populate("user", ["name"]);
+    res.json(profiles);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+/**
+  @route    GET api/profile/user/:user_id
+  @desc     Get profile by user ID
+  @access   Public
+ */
+router.get("/user/:user_id", async (req, res) => {
+  try {
+    const profile = await Profile.findOne({
+      user: req.params.user_id,
+    }).populate("user", ["name"]);
+    if (!profile) return res.status(400).json({ msg: "Profile not found" });
+    res.json(profile);
+  } catch (err) {
+    console.error(err.message);
+    if (err.king == "ObjectId") {
+      return res.status(400).json({ msg: "Profile not found" });
+    }
+    res.status(500).send("Server Error");
+  }
+});
+
+/**
+  @route    DELETE api/profile
+  @desc     Delete profile and user
+  @access   Private
+ */
+router.delete("/", auth, async (req, res) => {
+  try {
+    //Remove profile
+    await Profile.findOneAndRemove({ user: req.user.id });
+
+    //Remove user
+    await User.findOneAndRemove({ _id: req.user.id });
+
+    return res.status(200).json({ msg: "User deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 /**
   @route    POST api/profile/addLikedMeals
@@ -125,8 +184,11 @@ router.post("/addLikedMeals", auth, async (req, res) => {
   let profile = await Profile.findOne({ user: req.user.id });
   if (!profile) return res.status(500).send("No Profile");
 
-  var likedMeals = profile.likedMeals;
+  //Get previously liked meals from db profile + store in local obj
+  if (profile.likedMeals) var likedMeals = profile.likedMeals;
+  else var likedMeals = {};
 
+  //Add to local obj based on liked meals
   for (let meal of meals) {
     //If meal exists in liked meals already, add another like to it
     if (likedMeals[meal]) {
@@ -138,10 +200,11 @@ router.post("/addLikedMeals", auth, async (req, res) => {
     }
   }
 
-  //Update profile with liked meals
+  //Update local obj with liked meals
   const profileFields = {};
   profileFields.likedMeals = likedMeals;
-  //Upload to mongoDB
+
+  //Upload to mongoDB profile
   try {
     profile = await Profile.findOneAndUpdate(
       { user: req.user.id },
@@ -154,4 +217,53 @@ router.post("/addLikedMeals", auth, async (req, res) => {
   }
 });
 
+/**
+  @route    PUT api/profile/addDislikedMeals
+  @desc     Add disliked meals to profile
+  @access   Private 
+ */
+router.put("/addDislikedMeals", auth, async (req, res) => {
+  const meals = req.body.meals;
+
+  //If no meals are liked
+  if (meals.length == 0) {
+    return res.status(200).json({ status: "empty" });
+  }
+
+  //Get profile
+  let profile = await Profile.findOne({ user: req.user.id });
+  if (!profile) return res.status(500).send("No Profile");
+
+  //Get previously liked meals from db profile + store in local obj
+  if (profile.dislikedMeals) var dislikedMeals = profile.dislikedMeals;
+  else var dislikedMeals = {};
+
+  //Add to local obj based on disliked meals
+  for (let meal of meals) {
+    //If meal exists in disliked meals already, add another like to it
+    if (dislikedMeals[meal]) {
+      const numOfLikes = dislikedMeals[meal];
+      dislikedMeals[meal] = numOfLikes + 1;
+      //Else, add an initial like to it
+    } else {
+      dislikedMeals[meal] = 1;
+    }
+  }
+
+  //Update local obj with disliked meals
+  const profileFields = {};
+  profileFields.dislikedMeals = dislikedMeals;
+
+  //Upload to mongoDB profile
+  try {
+    profile = await Profile.findOneAndUpdate(
+      { user: req.user.id },
+      { $set: profileFields },
+      { useFindAndModify: false }
+    );
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+});
 module.exports = router;
