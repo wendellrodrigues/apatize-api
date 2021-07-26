@@ -42,6 +42,24 @@ const ProfileSchema = new mongoose.Schema({
     type: Object,
   },
 
+  //Temporary storage of weekly meals and weekly meal IDs (gets updated every week)
+  weeklyBreakfasts: {
+    type: Object,
+  },
+
+  weeklyLunches: {
+    type: Object,
+  },
+
+  weeklyDinners: {
+    type: Object,
+  },
+
+  //Offset (for getting new dishes)
+  offset: {
+    type: Number,
+  },
+
   //Meal types
   allergies: {
     type: Object,
