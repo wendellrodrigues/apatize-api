@@ -35,6 +35,7 @@ router.post("/generateMealPlan", auth, async (req, res) => {
   tmpLnch = tempLunch.results;
   tmpDnr = tempLunch.results;
 
+  //Add weekly meals to the user's Profile in the db
   await profile
     .addWeeklyMeals("breakfast", req.user.id, tmpBkfst, offset)
     .then((res) => {
@@ -75,6 +76,48 @@ router.post("/generateMealPlan", auth, async (req, res) => {
 router.get("/getWeeklyBreakfasts", auth, async (req, res) => {
   const breakfasts = await profile.getWeeklyBreakfasts(req.user.id);
   res.status(200).json(breakfasts);
+});
+
+/**
+  @route    POST api/food/getRecipe
+  @desc     Gets a Recipe based on ID
+  @access   Private 
+ */
+router.get("/getRecipe", auth, async (req, res) => {
+  //Request includes id of meal
+  mealId = req.body.mealId.toString();
+
+  try {
+    let profile = await Profile.findOne({ user: req.user.id });
+    if (profile) {
+      //Find the meal (hash) through breakfast, lunch and dinner objects
+      let meal = null;
+      if (mealId in profile.weeklyBreakfasts) {
+        meal = profile.weeklyBreakfasts[mealId];
+      } else if (mealId in profile.weeklyLunches) {
+        meal = profile.weeklyLunches[mealId];
+      } else if (mealId in profile.weeklyDinners) {
+        meal = profile.weeklyDinners[mealId];
+      } else {
+        //Recipe does not exist in user's weekly meals
+        return res.status(500).send("Server Error");
+      }
+      const recipe = meal.instructions;
+      if (recipe == null)
+        return res.status(200).json({ msg: "No Instructions" });
+      if (meal.instructions.length == 0)
+        return res.status(200).json({ msg: "No Instructions" });
+
+      //Return the recipe
+      return res.status(200).json(recipe);
+    } else {
+      //No profile found
+      return res.status(500).send("Server Error");
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send("Server Error");
+  }
 });
 
 /**
