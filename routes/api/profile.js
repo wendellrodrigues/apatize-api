@@ -66,6 +66,7 @@ router.post(
     profileFields.sex = sex;
     profileFields.goal = goal;
     profileFields.lifestyle = lifestyle;
+    profileFields.offset = 0;
 
     //Get recommended calories
     recommendedCals = calculators.calculateGoal(

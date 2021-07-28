@@ -10,7 +10,7 @@ const util = require("util");
 const profile = require("../../helpers/profile");
 const foods = require("../../helpers/food");
 
-//Temp resulsts for dev purposes
+//Temp results for dev purposes
 const tempBreakfast = require("../../helpers/temp/breakfast");
 const tempLunch = require("../../helpers/temp/lunch");
 const tempDinner = require("../../helpers/temp/dinner");
@@ -22,23 +22,34 @@ const tempDinner = require("../../helpers/temp/dinner");
  */
 router.post("/generateMealPlan", auth, async (req, res) => {
   //Get profile requirements
+  let userProfile = await Profile.findOne({ user: req.user.id });
+  if (!userProfile) return res.status(500).json({ err: "No Profile Found" });
 
   //Get offset (offset is the randomization)
-  //After 10 weeks, offset resets to 0
-  let offset = 0;
-
-  if (offset > 10) {
-    //reset offset function
-  }
+  let offset = userProfile.offset;
+  //reset offset
+  if (offset >= 10) offset = -1;
 
   //For dev purposes (remove later)
   tmpBkfst = tempBreakfast.results;
   tmpLnch = tempLunch.results;
   tmpDnr = tempLunch.results;
 
-  profile.addWeeklyMeals("breakfast", req.user.id, tmpBkfst, offset);
-  profile.addWeeklyMeals("lunch", req.user.id, tmpLnch, offset);
-  profile.addWeeklyMeals("dinner", req.user.id, tmpDnr, offset);
+  await profile
+    .addWeeklyMeals("breakfast", req.user.id, tmpBkfst, offset)
+    .then((res) => {
+      if (res == false) return res.status(500).send("Server Error");
+    });
+  await profile
+    .addWeeklyMeals("lunch", req.user.id, tmpLnch, offset)
+    .then((res) => {
+      if (res == false) return res.status(500).send("Server Error");
+    });
+  await profile
+    .addWeeklyMeals("dinner", req.user.id, tmpDnr, offset)
+    .then((res) => {
+      if (res == false) return res.status(500).send("Server Error");
+    });
 
   res.status(200).send("Success");
 
@@ -59,6 +70,11 @@ router.post("/generateMealPlan", auth, async (req, res) => {
   //   if (dinners == null) return res.status(500).send("Server Error");
   //   profile.addWeeklyMeals("dinner", req.user.id, dinners); //Add to db
   // });
+});
+
+router.get("/getWeeklyBreakfasts", auth, async (req, res) => {
+  const breakfasts = await profile.getWeeklyBreakfasts(req.user.id);
+  res.status(200).json(breakfasts);
 });
 
 /**

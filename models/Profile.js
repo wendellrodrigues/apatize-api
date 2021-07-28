@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const FoodSchema = require("./Food").schema;
 
 const ProfileSchema = new mongoose.Schema({
   //Reference a User model
