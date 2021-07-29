@@ -1,6 +1,42 @@
 const mongoose = require("mongoose");
 const FoodSchema = require("./Food").schema;
 
+const Day = new mongoose.Schema({
+  breakfasts: {
+    type: Object,
+  },
+  lunches: {
+    type: Object,
+  },
+  dinners: {
+    type: Object,
+  },
+});
+
+const Week = new mongoose.Schema({
+  sunday: {
+    type: Day,
+  },
+  monday: {
+    type: Day,
+  },
+  tuesday: {
+    type: Day,
+  },
+  wednesday: {
+    type: Day,
+  },
+  thursday: {
+    type: Day,
+  },
+  friday: {
+    type: Day,
+  },
+  saturday: {
+    type: Day,
+  },
+});
+
 const ProfileSchema = new mongoose.Schema({
   //Reference a User model
   user: {
@@ -41,6 +77,10 @@ const ProfileSchema = new mongoose.Schema({
   },
   dislikedMeals: {
     type: Object,
+  },
+
+  week: {
+    type: Week,
   },
 
   //Temporary storage of weekly meals and weekly meal IDs (gets updated every week)

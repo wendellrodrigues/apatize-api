@@ -37,39 +37,43 @@ router.post("/generateMealPlan", auth, async (req, res) => {
 
   //Add weekly meals to the user's Profile in the db
   await profile
-    .addWeeklyMeals("breakfast", req.user.id, tmpBkfst, offset)
+    .addWeeklyBreakfasts(req.user.id, tmpBkfst, offset)
     .then((res) => {
       if (res == false) return res.status(500).send("Server Error");
     });
-  await profile
-    .addWeeklyMeals("lunch", req.user.id, tmpLnch, offset)
-    .then((res) => {
-      if (res == false) return res.status(500).send("Server Error");
-    });
-  await profile
-    .addWeeklyMeals("dinner", req.user.id, tmpDnr, offset)
-    .then((res) => {
-      if (res == false) return res.status(500).send("Server Error");
-    });
+  await profile.addWeeklyLunches(req.user.id, tmpLnch, offset).then((res) => {
+    if (res == false) return res.status(500).send("Server Error");
+  });
+  await profile.addWeeklyDinners(req.user.id, tmpDnr, offset).then((res) => {
+    if (res == false) return res.status(500).send("Server Error");
+  });
 
   res.status(200).send("Success");
 
   // //Get Breakfasts from spoonacular
   // await foods.generateWeeklyBreakfasts(600).then((breakfasts) => {
   //   if (breakfasts == null) return res.status(500).send("Server Error");
-  //   profile.addWeeklyMeals("breakfast", req.user.id, breakfasts); //Add to db
+  //   await profile
+  // .addWeeklyBreakfasts(req.user.id, tmpBkfst, offset)
+  // .then((res) => {
+  //   if (res == false) return res.status(500).send("Server Error");
+  // });
   // });
 
   // //Get Lunches from spoonacular;
   // await foods.generateWeeklyMainCourses(600, offset).then((lunches) => {
   //   if (lunches == null) return res.status(500).send("Server Error");
-  //   profile.addWeeklyMeals("lunch", req.user.id, lunches); //Add to db
+  //   await profile.addWeeklyLunches(req.user.id, tmpLnch, offset).then((res) => {
+  //   if (res == false) return res.status(500).send("Server Error");
+  // });
   // });
 
   // //Get Dinners from spoonacular
   // await foods.generateWeeklyMainCourses(600, offset + 1).then((dinners) => {
   //   if (dinners == null) return res.status(500).send("Server Error");
-  //   profile.addWeeklyMeals("dinner", req.user.id, dinners); //Add to db
+  //   await profile.addWeeklyDinners(req.user.id, tmpDnr, offset).then((res) => {
+  //   if (res == false) return res.status(500).send("Server Error");
+  // });
   // });
 });
 
@@ -119,6 +123,12 @@ router.get("/getRecipe", auth, async (req, res) => {
     return res.status(500).send("Server Error");
   }
 });
+
+/**
+  @route    POST api/food/dislikeMeal/meal_:id
+  @desc     Dislikes a meal, removes it from weekly meals and 
+  @access   Private 
+ */
 
 /**
   @route    POST api/food/getIngredients
