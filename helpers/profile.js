@@ -4,7 +4,8 @@ const Food = require("../models/Food");
 const User = require("../models/User");
 
 module.exports = {
-  addWeeklyBreakfasts: async (id, meals, offset) => {
+  //Adds breakfasts to each day of the week
+  addWeeklyBreakfasts: async (id, meals) => {
     //Get profile
     let profile = await Profile.findOne({ user: id });
     if (!profile) return false;
@@ -70,7 +71,8 @@ module.exports = {
     }
   },
 
-  addWeeklyLunches: async (id, meals, offset) => {
+  //Adds lunches to each day of the week
+  addWeeklyLunches: async (id, meals) => {
     //Get profile
     let profile = await Profile.findOne({ user: id });
     if (!profile) return false;
@@ -143,6 +145,7 @@ module.exports = {
     }
   },
 
+  //Adds dinners to each day of the week
   addWeeklyDinners: async (id, meals, offset) => {
     //Get profile
     let profile = await Profile.findOne({ user: id });
@@ -208,6 +211,9 @@ module.exports = {
         profileFields.week.saturday.dinners[foodId] = food;
       }
     }
+
+    //Update offset
+    profileFields.offset = offset + 1;
 
     //Upload to mongoDB profile
     try {
@@ -326,16 +332,6 @@ module.exports = {
       console.log(err);
       return false;
     }
-  },
-
-  //Gets the users profile object from mongoDB
-
-  //Gets the user's weekly meals from MongoDB Profile Object
-  getWeeklyBreakfasts: async (id) => {
-    let profile = await Profile.findOne({ user: id });
-    if (!profile) return false;
-
-    return profile.weeklyBreakfasts;
   },
 };
 
